@@ -8,15 +8,18 @@ import { useSettings } from '@/hooks/use-settings';
 const summaryItems = [
   {
     key: 'realized',
-    label: 'Value realized'
+    label: 'Value realized',
+    icon: 'savings'
   },
   {
     key: 'potential',
-    label: 'Annual potential'
+    label: 'Annual potential',
+    icon: 'toll'
   },
   {
     key: 'netRoi',
-    label: 'Net ROI'
+    label: 'Net ROI',
+    icon: 'contract_edit'
   }
 ] as const;
 
@@ -29,8 +32,11 @@ export function SummaryCards() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {summaryItems.map(item => (
         <CardPrimitive key={item.key}>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm text-muted-foreground">{item.label}</CardTitle>
+            <span aria-hidden className="material-symbols-outlined text-lg text-primary">
+              {item.icon}
+            </span>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{formatCurrency(totals[item.key], settings.currency)}</p>

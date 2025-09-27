@@ -1,11 +1,19 @@
+"use client";
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { CardPicker } from '@/components/onboarding/card-picker';
 import { Button } from '@/components/ui/button';
 
 export default function WelcomePage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-12 px-6 py-16">
-      <section className="space-y-4 text-center">
+      <motion.section
+        className="space-y-4 text-center"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <p className="text-xs uppercase tracking-widest text-primary">Juice your cards</p>
         <h1 className="text-4xl font-semibold tracking-tight">Unlock every perk without spreadsheets</h1>
         <p className="mx-auto max-w-2xl text-muted-foreground">
@@ -20,8 +28,13 @@ export default function WelcomePage() {
             <Link href="/history">View history</Link>
           </Button>
         </div>
-      </section>
-      <section className="space-y-6">
+      </motion.section>
+      <motion.section
+        className="space-y-6"
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+      >
         <header className="space-y-2 text-left">
           <h2 className="text-2xl font-semibold">Add a card</h2>
           <p className="text-sm text-muted-foreground">
@@ -29,7 +42,7 @@ export default function WelcomePage() {
           </p>
         </header>
         <CardPicker />
-      </section>
+      </motion.section>
     </div>
   );
 }
