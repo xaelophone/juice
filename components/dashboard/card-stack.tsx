@@ -5,7 +5,7 @@ import { Card as CardPrimitive, CardContent, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { PerkDetailDialog } from '@/components/perks/perk-detail-dialog';
-import { useDashboardFilters, cadenceOptions, cardOptions, type FilterOption } from '@/hooks/use-dashboard-filters';
+import { useDashboardFilters, cadenceOptions, cardOptions, categoryOptions, type FilterOption } from '@/hooks/use-dashboard-filters';
 import { useFilteredCards } from '@/hooks/use-filtered-cards';
 import { useJuiceState } from '@/hooks/use-juice-state';
 import { useSettings } from '@/hooks/use-settings';
@@ -28,6 +28,22 @@ const cadenceBadgeClasses: Record<ResetCadence, string> = {
   quarterly: 'border-transparent bg-emerald-100 text-emerald-700',
   semiannual: 'border-transparent bg-amber-100 text-amber-700',
   annual: 'border-transparent bg-violet-100 text-violet-700'
+};
+
+const categoryLabels = categoryOptions.reduce(
+  (acc, option) => {
+    if (option.value !== 'all') {
+      acc[option.value] = option.label;
+    }
+    return acc;
+  },
+  {} as Record<'travel' | 'lifestyle' | 'shopping', string>
+);
+
+const categoryBadgeClasses: Record<'travel' | 'lifestyle' | 'shopping', string> = {
+  travel: 'border-transparent bg-sky-100 text-sky-700',
+  lifestyle: 'border-transparent bg-purple-100 text-purple-700',
+  shopping: 'border-transparent bg-rose-100 text-rose-700'
 };
 
 const roiTagClasses = {
@@ -77,7 +93,7 @@ function FilterSelect<T extends string>({ id, label, value, options, onChange }:
 export function CardStack() {
   const { cards, cadenceValue } = useFilteredCards();
   const { selectedCards, recordCompletion, removeCompletion } = useJuiceState();
-  const { cadenceFilter, setCadenceFilter, cardFilter, setCardFilter } = useDashboardFilters();
+  const { cadenceFilter, setCadenceFilter, cardFilter, setCardFilter, categoryFilter, setCategoryFilter } = useDashboardFilters();
   const { settings } = useSettings();
 
   if (selectedCards.length === 0) {
@@ -106,6 +122,13 @@ export function CardStack() {
         options={cardOptions}
         onChange={value => setCardFilter(value)}
       />
+      <FilterSelect
+        id="category-filter"
+        label="Category"
+        value={categoryFilter}
+        options={categoryOptions}
+        onChange={value => setCategoryFilter(value)}
+      />
     </div>
   );
 
@@ -127,7 +150,6 @@ export function CardStack() {
         const captureRate = card.potential === 0 ? 0 : Math.min(1, card.realized / card.potential);
         const netRoi = card.realized - card.annualFee;
         const roiTone = netRoi > 0 ? 'positive' : netRoi < 0 ? 'negative' : 'neutral';
-        const showNetRoi = cadenceValue === undefined && card.cardId !== 'amex-platinum';
 
         return (
           <CardPrimitive key={card.cardId}>
@@ -157,9 +179,10 @@ export function CardStack() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {card.perks.map(({ perk, completions, usedAmount, remaining }) => {
+                {card.perks.map(({ perk, completions, usedAmount, remaining, category }) => {
                   const isComplete = usedAmount >= perk.cashValue;
                   const cadenceLabel = cadenceLabels[perk.cadence] ?? perk.cadence;
+                  const categoryLabel = categoryLabels[category];
 
                   return (
                     <div
@@ -177,6 +200,12 @@ export function CardStack() {
                             className={cn('border', cadenceBadgeClasses[perk.cadence])}
                           >
                             {cadenceLabel}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={cn('border', categoryBadgeClasses[category])}
+                          >
+                            {categoryLabel}
                           </Badge>
                           <span>Remaining {formatCurrency(remaining, settings.currency)}</span>
                         </div>

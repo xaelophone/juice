@@ -5,6 +5,7 @@ import type { ResetCadence } from '@/types';
 
 export type CadenceFilter = 'all' | ResetCadence;
 export type CardFilter = 'all' | 'csr' | 'amex-platinum';
+export type CategoryFilter = 'all' | 'travel' | 'lifestyle' | 'shopping';
 
 export interface FilterOption<T extends string> {
   label: string;
@@ -25,11 +26,20 @@ export const cardOptions = [
   { label: 'American Express Platinum', value: 'amex-platinum' }
 ] as const satisfies readonly FilterOption<CardFilter>[];
 
+export const categoryOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Travel', value: 'travel' },
+  { label: 'Lifestyle', value: 'lifestyle' },
+  { label: 'Shopping', value: 'shopping' }
+] as const satisfies readonly FilterOption<CategoryFilter>[];
+
 interface DashboardFilterContextValue {
   cadenceFilter: CadenceFilter;
   setCadenceFilter: (value: CadenceFilter) => void;
   cardFilter: CardFilter;
   setCardFilter: (value: CardFilter) => void;
+  categoryFilter: CategoryFilter;
+  setCategoryFilter: (value: CategoryFilter) => void;
 }
 
 const DashboardFilterContext = createContext<DashboardFilterContextValue | null>(null);
@@ -37,10 +47,11 @@ const DashboardFilterContext = createContext<DashboardFilterContextValue | null>
 export function DashboardFilterProvider({ children }: { children: ReactNode }) {
   const [cadenceFilter, setCadenceFilter] = useState<CadenceFilter>('all');
   const [cardFilter, setCardFilter] = useState<CardFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
   const value = useMemo(
-    () => ({ cadenceFilter, setCadenceFilter, cardFilter, setCardFilter }),
-    [cadenceFilter, cardFilter]
+    () => ({ cadenceFilter, setCadenceFilter, cardFilter, setCardFilter, categoryFilter, setCategoryFilter }),
+    [cadenceFilter, cardFilter, categoryFilter]
   );
 
   return <DashboardFilterContext.Provider value={value}>{children}</DashboardFilterContext.Provider>;

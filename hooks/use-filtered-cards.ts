@@ -11,6 +11,7 @@ interface FilteredPerk {
   usedAmount: number;
   earned: number;
   remaining: number;
+  category: 'travel' | 'lifestyle' | 'shopping';
 }
 
 interface FilteredCard {
@@ -31,7 +32,7 @@ interface FilteredTotals {
 
 export function useFilteredCards() {
   const { selectedCards, getPerkCompletions } = useJuiceState();
-  const { cadenceFilter, cardFilter } = useDashboardFilters();
+  const { cadenceFilter, cardFilter, categoryFilter } = useDashboardFilters();
 
   const cadenceValue = cadenceFilter === 'all' ? undefined : cadenceFilter;
 
@@ -40,24 +41,48 @@ export function useFilteredCards() {
       ? selectedCards
       : selectedCards.filter(card => card.id === cardFilter);
 
+    const getCategory = (perk: Perk): 'travel' | 'lifestyle' | 'shopping' => {
+      const tagSet = new Set(perk.tags);
+      if (['travel', 'hotel', 'lounge', 'transportation', 'security', 'airline'].some(tag => tagSet.has(tag))) {
+        return 'travel';
+      }
+      if (['shopping', 'retail'].some(tag => tagSet.has(tag))) {
+        return 'shopping';
+      }
+      return 'lifestyle';
+    };
+
     const filteredCards: FilteredCard[] = cardsMatchingId
       .map(card => {
-        const visiblePerks = cadenceValue
-          ? card.perks.filter(perk => perk.cadence === cadenceValue)
-          : card.perks;
+        const visiblePerks = card.perks.filter(perk => {
+          if (cadenceValue && perk.cadence !== cadenceValue) {
+            return false;
+          }
+
+          if (categoryFilter !== 'all') {
+            const perkCategory = getCategory(perk);
+            if (perkCategory !== categoryFilter) {
+              return false;
+            }
+          }
+
+          return true;
+        });
 
         const perks: FilteredPerk[] = visiblePerks.map(perk => {
           const completions = getPerkCompletions(perk.id);
           const usedAmount = completions.reduce((total, completion) => total + completion.amount, 0);
           const earned = Math.min(perk.cashValue, usedAmount);
           const remaining = Math.max(0, perk.cashValue - usedAmount);
+          const category = getCategory(perk);
 
           return {
             perk,
             completions,
             usedAmount,
             earned,
-            remaining
+            remaining,
+            category
           };
         });
 
@@ -92,7 +117,7 @@ export function useFilteredCards() {
         netRoi: baseTotals.realized - baseTotals.annualFees
       }
     };
-  }, [cadenceValue, cardFilter, getPerkCompletions, selectedCards]);
+  }, [cadenceValue, categoryFilter, cardFilter, getPerkCompletions, selectedCards]);
 
   return {
     cards,
