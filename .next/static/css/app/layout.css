@@ -694,6 +694,9 @@ body{
 .h-full{
   height: 100%;
 }
+.h-6{
+  height: 1.5rem;
+}
 .min-h-\[80px\]{
   min-height: 80px;
 }
@@ -711,6 +714,9 @@ body{
 }
 .w-full{
   width: 100%;
+}
+.w-6{
+  width: 1.5rem;
 }
 .max-w-2xl{
   max-width: 42rem;
@@ -1353,6 +1359,10 @@ body{
 
   .lg\:grid-cols-4{
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lg\:grid-cols-3{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

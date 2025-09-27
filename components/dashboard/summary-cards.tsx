@@ -1,24 +1,24 @@
 'use client';
 
 import { Card as CardPrimitive, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatPercentage } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import { useJuiceState } from '@/hooks/use-juice-state';
 import { useSettings } from '@/hooks/use-settings';
 
 const summaryItems = [
   {
     key: 'realized',
-    label: 'Value realized',
+    label: 'Realized Value',
     icon: 'savings'
   },
   {
     key: 'potential',
-    label: 'Annual potential',
+    label: 'Potential Value',
     icon: 'toll'
   },
   {
     key: 'netRoi',
-    label: 'Net ROI',
+    label: 'ROI',
     icon: 'contract_edit'
   }
 ] as const;
@@ -26,10 +26,10 @@ const summaryItems = [
 export function SummaryCards() {
   const { summary } = useJuiceState();
   const { settings } = useSettings();
-  const { totals, captureRate } = summary;
+  const { totals } = summary;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {summaryItems.map(item => (
         <CardPrimitive key={item.key}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -43,14 +43,6 @@ export function SummaryCards() {
           </CardContent>
         </CardPrimitive>
       ))}
-      <CardPrimitive>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Capture rate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-semibold">{formatPercentage(captureRate)}</p>
-        </CardContent>
-      </CardPrimitive>
     </div>
   );
 }

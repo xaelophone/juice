@@ -77,15 +77,18 @@ export function CardStack() {
                         onSubmit={payload => recordCompletion(perk.id, payload)}
                         onRemoveCompletion={completionId => removeCompletion(perk.id, completionId)}
                         trigger={
-                          <div className="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground">
+                          <button
+                            type="button"
+                            className="flex cursor-pointer select-none items-center gap-3 text-sm text-muted-foreground transition hover:text-foreground"
+                            aria-label={`View details for ${perk.title}`}
+                          >
                             <Checkbox
                               checked={isComplete}
                               readOnly
                               aria-label={`Perk ${perk.title} completion status`}
-                              className="pointer-events-none"
+                              className="pointer-events-none h-6 w-6"
                             />
-                            <span>{isComplete ? 'Completed' : 'Mark as used'}</span>
-                          </div>
+                          </button>
                         }
                       />
                     </div>
@@ -93,10 +96,12 @@ export function CardStack() {
                 })}
               </div>
             </CardContent>
-            <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Capture rate: {formatPercentage(captureRate)}</span>
-              <span>Net ROI: {formatCurrency(realized - card.annualFee, settings.currency)}</span>
-            </CardFooter>
+            {card.id !== 'amex-platinum' && (
+              <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Capture rate: {formatPercentage(captureRate)}</span>
+                <span>Net ROI: {formatCurrency(realized - card.annualFee, settings.currency)}</span>
+              </CardFooter>
+            )}
           </CardPrimitive>
         );
       })}
