@@ -1,7 +1,7 @@
 'use client';
 
 import { useSettings } from '@/hooks/use-settings';
-import { Card as CardPrimitive, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card as CardPrimitive, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,6 @@ export function CurrencyForm() {
     <CardPrimitive>
       <CardHeader>
         <CardTitle>Currency</CardTitle>
-        <CardDescription>Choose the currency to display in your dashboard calculations.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2">
         {currencies.map(currency => {

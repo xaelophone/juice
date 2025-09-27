@@ -901,6 +901,9 @@ body{
 .bg-primary\/10{
   background-color: hsl(var(--primary) / 0.1);
 }
+.bg-destructive{
+  background-color: hsl(var(--destructive));
+}
 .p-4{
   padding: 1rem;
 }
@@ -970,6 +973,12 @@ body{
 }
 .pt-0{
   padding-top: 0px;
+}
+.pt-2{
+  padding-top: 0.5rem;
+}
+.pt-12{
+  padding-top: 3rem;
 }
 .text-left{
   text-align: left;
@@ -1051,6 +1060,9 @@ body{
 .text-primary-foreground{
   color: hsl(var(--primary-foreground));
 }
+.text-destructive-foreground{
+  color: hsl(var(--destructive-foreground));
+}
 .underline{
   text-decoration-line: underline;
 }
@@ -1077,6 +1089,9 @@ body{
 }
 .ring-offset-background{
   --tw-ring-offset-color: hsl(var(--background));
+}
+.filter{
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .backdrop-blur-sm{
   --tw-backdrop-blur: blur(4px);
@@ -1197,6 +1212,10 @@ body{
 
 .hover\:bg-primary\/90:hover{
   background-color: hsl(var(--primary) / 0.9);
+}
+
+.hover\:bg-destructive\/90:hover{
+  background-color: hsl(var(--destructive) / 0.9);
 }
 
 .hover\:text-accent-foreground:hover{
