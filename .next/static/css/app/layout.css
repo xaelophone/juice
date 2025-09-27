@@ -627,6 +627,9 @@ body{
   white-space: nowrap;
   border-width: 0;
 }
+.pointer-events-none{
+  pointer-events: none;
+}
 .fixed{
   position: fixed;
 }
@@ -657,6 +660,9 @@ body{
 .mx-auto{
   margin-left: auto;
   margin-right: auto;
+}
+.block{
+  display: block;
 }
 .flex{
   display: flex;
@@ -718,6 +724,9 @@ body{
 .max-w-lg{
   max-width: 32rem;
 }
+.max-w-3xl{
+  max-width: 48rem;
+}
 .flex-1{
   flex: 1 1 0%;
 }
@@ -737,6 +746,14 @@ body{
 }
 .cursor-default{
   cursor: default;
+}
+.cursor-pointer{
+  cursor: pointer;
+}
+.select-none{
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 .flex-row{
   flex-direction: row;
@@ -934,6 +951,10 @@ body{
 .py-8{
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+.py-3{
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 .pb-2{
   padding-bottom: 0.5rem;
@@ -1176,6 +1197,10 @@ body{
   color: hsl(var(--accent-foreground));
 }
 
+.hover\:text-foreground:hover{
+  color: hsl(var(--foreground));
+}
+
 .hover\:opacity-100:hover{
   opacity: 1;
 }
@@ -1230,6 +1255,14 @@ body{
   opacity: 0.5;
 }
 
+.data-\[state\=closed\]\:duration-150[data-state=closed]{
+  transition-duration: 150ms;
+}
+
+.data-\[state\=open\]\:duration-200[data-state=open]{
+  transition-duration: 200ms;
+}
+
 .data-\[state\=open\]\:animate-in[data-state=open]{
   animation-name: enter;
   animation-duration: 150ms;
@@ -1250,6 +1283,22 @@ body{
   --tw-exit-translate-y: initial;
 }
 
+.data-\[state\=closed\]\:fade-out-0[data-state=closed]{
+  --tw-exit-opacity: 0;
+}
+
+.data-\[state\=open\]\:fade-in-0[data-state=open]{
+  --tw-enter-opacity: 0;
+}
+
+.data-\[state\=closed\]\:duration-150[data-state=closed]{
+  animation-duration: 150ms;
+}
+
+.data-\[state\=open\]\:duration-200[data-state=open]{
+  animation-duration: 200ms;
+}
+
 @media (min-width: 640px){
 
   .sm\:grid-cols-2{
@@ -1258,6 +1307,10 @@ body{
 
   .sm\:grid-cols-\[auto_1fr_auto\]{
     grid-template-columns: auto 1fr auto;
+  }
+
+  .sm\:grid-cols-\[1fr_auto\]{
+    grid-template-columns: 1fr auto;
   }
 
   .sm\:flex-row{
