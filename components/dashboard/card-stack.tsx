@@ -30,6 +30,12 @@ const cadenceBadgeClasses: Record<ResetCadence, string> = {
   annual: 'border-transparent bg-violet-100 text-violet-700'
 };
 
+const roiTagClasses = {
+  positive: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
+  negative: 'border border-red-200 bg-red-50 text-red-700',
+  neutral: 'border border-amber-200 bg-amber-50 text-amber-700'
+} as const;
+
 interface FilterSelectProps<T extends string> {
   id: string;
   label: string;
@@ -119,6 +125,8 @@ export function CardStack() {
       {filterControl}
       {cards.map(card => {
         const captureRate = card.potential === 0 ? 0 : Math.min(1, card.realized / card.potential);
+        const netRoi = card.realized - card.annualFee;
+        const roiTone = netRoi > 0 ? 'positive' : netRoi < 0 ? 'negative' : 'neutral';
         const showNetRoi = cadenceValue === undefined && card.cardId !== 'amex-platinum';
 
         return (
@@ -126,15 +134,25 @@ export function CardStack() {
             <CardHeader className="flex flex-col gap-2">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>{card.name}</CardTitle>
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
+                    roiTagClasses[roiTone]
+                  )}
+                >
+                  ROI {formatCurrency(netRoi, settings.currency)}
+                </span>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-sm font-medium">
-                  <span>{formatCurrency(card.realized, settings.currency)} captured</span>
+                <div className="flex items-center justify-end text-xs font-medium text-muted-foreground">
                   <span>
-                    {formatPercentage(captureRate)} of {formatCurrency(card.potential, settings.currency)}
+                    {formatCurrency(card.realized, settings.currency)} of {formatCurrency(card.potential, settings.currency)} benefits claimed
                   </span>
                 </div>
-                <Progress value={captureRate * 100} />
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-semibold text-foreground">{formatPercentage(captureRate)}</span>
+                  <Progress value={captureRate * 100} className="flex-1" />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -189,12 +207,6 @@ export function CardStack() {
                 })}
               </div>
             </CardContent>
-            {showNetRoi && (
-              <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Capture rate: {formatPercentage(captureRate)}</span>
-                <span>Net ROI: {formatCurrency(card.realized - card.annualFee, settings.currency)}</span>
-              </CardFooter>
-            )}
           </CardPrimitive>
         );
       })}
