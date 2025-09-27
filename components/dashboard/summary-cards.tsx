@@ -1,10 +1,11 @@
 'use client';
 
 import { Card as CardPrimitive, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/format';
+import { Progress } from '@/components/ui/progress';
+import { formatCurrency, formatPercentage } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { useJuiceState } from '@/hooks/use-juice-state';
 import { useSettings } from '@/hooks/use-settings';
+import { useFilteredCards } from '@/hooks/use-filtered-cards';
 
 const valueCards = [
   {
@@ -41,12 +42,14 @@ const roiStyles = {
 } as const;
 
 export function SummaryCards() {
-  const { summary } = useJuiceState();
   const { settings } = useSettings();
-  const { totals } = summary;
+  const { totals: filteredTotals } = useFilteredCards();
 
-  const roiTone = totals.netRoi > 0 ? 'positive' : totals.netRoi < 0 ? 'negative' : 'neutral';
+  const roiTone = filteredTotals.netRoi > 0 ? 'positive' : filteredTotals.netRoi < 0 ? 'negative' : 'neutral';
   const toneStyles = roiStyles[roiTone];
+  const filteredCaptureRate = filteredTotals.potential === 0
+    ? 0
+    : Math.min(1, filteredTotals.realized / filteredTotals.potential);
 
   return (
     <div className="space-y-4">
@@ -62,8 +65,20 @@ export function SummaryCards() {
         </CardHeader>
         <CardContent>
           <p className={cn('text-2xl font-semibold', toneStyles.value)}>
-            {formatCurrency(totals.netRoi, settings.currency)}
+            {formatCurrency(filteredTotals.netRoi, settings.currency)}
           </p>
+        </CardContent>
+      </CardPrimitive>
+
+      <CardPrimitive>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm text-muted-foreground">Progress</CardTitle>
+          <span aria-hidden className="text-xs font-medium text-muted-foreground">
+            {formatCurrency(filteredTotals.realized, settings.currency)} of {formatCurrency(filteredTotals.potential, settings.currency)}
+          </span>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Progress value={filteredCaptureRate * 100} />
         </CardContent>
       </CardPrimitive>
 
@@ -76,7 +91,7 @@ export function SummaryCards() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">
-                {formatCurrency(totals[item.key], settings.currency)}
+                {formatCurrency(filteredTotals[item.key], settings.currency)}
               </p>
             </CardContent>
           </CardPrimitive>

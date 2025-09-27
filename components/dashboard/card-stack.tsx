@@ -1,28 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card as CardPrimitive, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { PerkDetailDialog } from '@/components/perks/perk-detail-dialog';
+import { useDashboardFilters, cadenceOptions, cardOptions, type FilterOption } from '@/hooks/use-dashboard-filters';
+import { useFilteredCards } from '@/hooks/use-filtered-cards';
 import { useJuiceState } from '@/hooks/use-juice-state';
 import { useSettings } from '@/hooks/use-settings';
 import { formatCurrency, formatPercentage } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ResetCadence } from '@/types';
-
-type CadenceFilter = 'all' | ResetCadence;
-type CardFilter = 'all' | 'csr' | 'amex-platinum';
-type FilterOption<T extends string> = { label: string; value: T };
-
-const cadenceOptions = [
-  { label: 'All', value: 'all' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Quarterly', value: 'quarterly' },
-  { label: 'Semiannual', value: 'semiannual' },
-  { label: 'Annual', value: 'annual' }
-] as const satisfies readonly FilterOption<CadenceFilter>[];
 
 const cadenceLabels = cadenceOptions.reduce(
   (acc, option) => {
@@ -40,12 +29,6 @@ const cadenceBadgeClasses: Record<ResetCadence, string> = {
   semiannual: 'border-transparent bg-amber-100 text-amber-700',
   annual: 'border-transparent bg-violet-100 text-violet-700'
 };
-
-const cardOptions = [
-  { label: 'All', value: 'all' },
-  { label: 'Chase Sapphire Reserve', value: 'csr' },
-  { label: 'American Express Platinum', value: 'amex-platinum' }
-] as const satisfies readonly FilterOption<CardFilter>[];
 
 interface FilterSelectProps<T extends string> {
   id: string;
@@ -86,12 +69,10 @@ function FilterSelect<T extends string>({ id, label, value, options, onChange }:
 }
 
 export function CardStack() {
-  const { selectedCards, getPerkCompletions, recordCompletion, removeCompletion } = useJuiceState();
+  const { cards, cadenceValue } = useFilteredCards();
+  const { selectedCards, recordCompletion, removeCompletion } = useJuiceState();
+  const { cadenceFilter, setCadenceFilter, cardFilter, setCardFilter } = useDashboardFilters();
   const { settings } = useSettings();
-  const [cadenceFilter, setCadenceFilter] = useState<CadenceFilter>('all');
-  const [cardFilter, setCardFilter] = useState<CardFilter>('all');
-
-  const cadenceValue = cadenceFilter === 'all' ? undefined : cadenceFilter;
 
   if (selectedCards.length === 0) {
     return (
@@ -102,11 +83,6 @@ export function CardStack() {
       </div>
     );
   }
-
-  const cardsMatchingId = cardFilter === 'all' ? selectedCards : selectedCards.filter(card => card.id === cardFilter);
-  const cardsToDisplay = cadenceValue
-    ? cardsMatchingId.filter(card => card.perks.some(perk => perk.cadence === cadenceValue))
-    : cardsMatchingId;
 
   const filterControl = (
     <div className="flex flex-wrap items-center gap-4">
@@ -127,7 +103,7 @@ export function CardStack() {
     </div>
   );
 
-  if (cardsToDisplay.length === 0) {
+  if (cards.length === 0) {
     return (
       <div className="space-y-4">
         {filterControl}
@@ -141,40 +117,21 @@ export function CardStack() {
   return (
     <div className="space-y-6">
       {filterControl}
-      {cardsToDisplay.map(card => {
-        const visiblePerks = cadenceValue
-          ? card.perks.filter(perk => perk.cadence === cadenceValue)
-          : card.perks;
-
-        const perksWithCompletions = visiblePerks.map(perk => {
-          const completions = getPerkCompletions(perk.id);
-          const usedAmount = completions.reduce((total, completion) => total + completion.amount, 0);
-          const earned = Math.min(perk.cashValue, usedAmount);
-
-          return {
-            perk,
-            completions,
-            usedAmount,
-            earned
-          };
-        });
-
-        const potential = perksWithCompletions.reduce((total, entry) => total + entry.perk.cashValue, 0);
-        const realized = perksWithCompletions.reduce((total, entry) => total + entry.earned, 0);
-        const captureRate = potential === 0 ? 0 : Math.min(1, realized / potential);
-        const showNetRoi = cadenceValue === undefined && card.id !== 'amex-platinum';
+      {cards.map(card => {
+        const captureRate = card.potential === 0 ? 0 : Math.min(1, card.realized / card.potential);
+        const showNetRoi = cadenceValue === undefined && card.cardId !== 'amex-platinum';
 
         return (
-          <CardPrimitive key={card.id}>
+          <CardPrimitive key={card.cardId}>
             <CardHeader className="flex flex-col gap-2">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>{card.name}</CardTitle>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm font-medium">
-                  <span>{formatCurrency(realized, settings.currency)} captured</span>
+                  <span>{formatCurrency(card.realized, settings.currency)} captured</span>
                   <span>
-                    {formatPercentage(captureRate)} of {formatCurrency(potential, settings.currency)}
+                    {formatPercentage(captureRate)} of {formatCurrency(card.potential, settings.currency)}
                   </span>
                 </div>
                 <Progress value={captureRate * 100} />
@@ -182,9 +139,8 @@ export function CardStack() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {perksWithCompletions.map(({ perk, completions, usedAmount }) => {
+                {card.perks.map(({ perk, completions, usedAmount, remaining }) => {
                   const isComplete = usedAmount >= perk.cashValue;
-                  const remaining = Math.max(0, perk.cashValue - usedAmount);
                   const cadenceLabel = cadenceLabels[perk.cadence] ?? perk.cadence;
 
                   return (
@@ -236,7 +192,7 @@ export function CardStack() {
             {showNetRoi && (
               <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>Capture rate: {formatPercentage(captureRate)}</span>
-                <span>Net ROI: {formatCurrency(realized - card.annualFee, settings.currency)}</span>
+                <span>Net ROI: {formatCurrency(card.realized - card.annualFee, settings.currency)}</span>
               </CardFooter>
             )}
           </CardPrimitive>
