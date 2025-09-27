@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChartBarIcon, ClockIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: ChartBarIcon },
-  { href: '/history', label: 'History', icon: ClockIcon },
   { href: '/settings', label: 'Settings', icon: Cog6ToothIcon }
 ];
 
