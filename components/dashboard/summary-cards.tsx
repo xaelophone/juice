@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card as CardPrimitive, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,18 +11,26 @@ import { useSettings } from '@/hooks/use-settings';
 import { useFilteredCards } from '@/hooks/use-filtered-cards';
 import { useGameplan } from '@/hooks/use-gameplan';
 import { useJuiceState } from '@/hooks/use-juice-state';
+import { useDashboardFilters } from '@/hooks/use-dashboard-filters';
 import type { GameplanTask } from '@/types';
 
 const GAMEPLAN_MODEL = 'gpt-5';
+const PRIORITY_ORDER: Record<GameplanTask['priority'], number> = {
+  high: 0,
+  medium: 1,
+  low: 2
+};
 
 export function SummaryCards() {
   const { settings } = useSettings();
-  const { totals: filteredTotals } = useFilteredCards();
+  const { cards: filteredCards, totals: filteredTotals } = useFilteredCards();
   const { cards, selectedCards, summary } = useJuiceState();
   const { plan, replacePlan, clearChat, status, setStatus } = useGameplan();
+  const { cadenceFilter, cardFilter, categoryFilter } = useDashboardFilters();
   const [error, setError] = useState<string | null>(null);
 
   const isGenerating = status === 'generating';
+  const hasActiveFilters = cadenceFilter !== 'all' || cardFilter !== 'all' || categoryFilter !== 'all';
 
   const filteredCaptureRate = filteredTotals.potential === 0
     ? 0
@@ -36,25 +45,88 @@ export function SummaryCards() {
     return new Map(entries);
   }, [cards]);
 
+  const planTasks = useMemo(() => plan?.tasks ?? [], [plan]);
+
+  const visibleCardIds = useMemo(() => new Set(filteredCards.map(card => card.cardId)), [filteredCards]);
+
+  const visiblePerkIds = useMemo(
+    () => new Set(filteredCards.flatMap(card => card.perks.map(entry => entry.perk.id))),
+    [filteredCards]
+  );
+
+  const prioritizedTasks = useMemo(() => {
+    if (planTasks.length === 0) {
+      return [] as GameplanTask[];
+    }
+
+    const relevantTasks = planTasks.filter(task => {
+      const matchesPerk = task.perkId ? visiblePerkIds.has(task.perkId) : false;
+      const matchesCard = task.cardId ? visibleCardIds.has(task.cardId) : false;
+      const hasAssociations = Boolean(task.cardId || task.perkId);
+
+      const requiresPerkSpecificity = cadenceFilter !== 'all' || categoryFilter !== 'all';
+
+      if (!hasActiveFilters) {
+        return matchesPerk || matchesCard || !hasAssociations;
+      }
+
+      if (requiresPerkSpecificity) {
+        return matchesPerk;
+      }
+
+      if (cardFilter !== 'all') {
+        return matchesCard || matchesPerk;
+      }
+
+      if (!hasAssociations) {
+        return false;
+      }
+
+      return matchesPerk || matchesCard;
+    });
+
+    const pool = relevantTasks.length > 0 ? relevantTasks : hasActiveFilters ? [] : planTasks;
+
+    return [...pool].sort((a, b) => {
+      const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      const valueDiff = (b.expectedValue ?? 0) - (a.expectedValue ?? 0);
+      if (valueDiff !== 0) return valueDiff;
+      return (a.dueBy ?? '').localeCompare(b.dueBy ?? '');
+    });
+  }, [cadenceFilter, cardFilter, categoryFilter, hasActiveFilters, planTasks, visibleCardIds, visiblePerkIds]);
+
   const narrative = useMemo(() => {
-    if (!plan?.tasks?.length) {
+    if (planTasks.length === 0) {
       return null;
     }
 
-    const sorted = [...plan.tasks].sort((a, b) => {
-      const valueDiff = (b.expectedValue ?? 0) - (a.expectedValue ?? 0);
-      if (valueDiff !== 0) return valueDiff;
-      const priorityRank = { high: 0, medium: 1, low: 2 } as const;
-      return priorityRank[a.priority] - priorityRank[b.priority];
-    });
+    if (prioritizedTasks.length === 0) {
+      return hasActiveFilters
+        ? 'No high-priority actions match your current filters. Loosen them up to see what else is worth chasing.'
+        : 'Plan is locked and loaded.';
+    }
 
-    const topTasks = sorted.slice(0, 3);
+    const topTasks = prioritizedTasks.slice(0, 3);
 
     return topTasks
       .map((task, index) => createPersonaSentence(task, index, cardLookup, perkLookup, settings.currency))
       .filter(Boolean)
       .join(' ');
-  }, [cardLookup, perkLookup, plan?.tasks, settings.currency]);
+  }, [cardLookup, hasActiveFilters, perkLookup, planTasks, prioritizedTasks, settings.currency]);
+
+  const filterSignature = useMemo(
+    () =>
+      [cadenceFilter, cardFilter, categoryFilter, filteredCards
+        .map(card => `${card.cardId}:${card.perks.map(entry => entry.perk.id).join(',')}`)
+        .join('|')]
+        .join('::'),
+    [cadenceFilter, cardFilter, categoryFilter, filteredCards]
+  );
+
+  const prioritizedKey = prioritizedTasks.slice(0, 3).map(task => task.id).join('|') || 'no-matches';
+  const animationKey = isGenerating ? 'generating' : `${filterSignature}::${prioritizedKey}`;
+  const displayedNarrative = narrative ?? 'Plan is locked and loaded.';
 
   const handleGenerate = async () => {
     if (selectedCards.length === 0) {
@@ -151,17 +223,27 @@ export function SummaryCards() {
           <Progress value={filteredCaptureRate * 100} className="flex-1" />
         </div>
         {(isGenerating || plan) && (
-          <div className="mt-6 space-y-2 rounded-lg border border-border/60 bg-muted/30 p-4">
+          <div className="mt-6 space-y-2 rounded-lg border border-emerald-200/70 bg-emerald-50 p-4 dark:border-emerald-500/40 dark:bg-emerald-900/60">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Gameplan</span>
               {plan?.generatedAt && (
                 <span className="text-xs text-muted-foreground">Updated {formatTimestamp(plan.generatedAt)}</span>
               )}
             </div>
-            <p className="text-sm leading-6 text-foreground">
-              {isGenerating ? 'Sit tight, kid—I am working the phones to stitch together your next score.' : narrative ??
-                'Plan is locked and loaded.'}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={animationKey}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="text-sm leading-6 text-foreground"
+              >
+                {isGenerating
+                  ? 'Sit tight, kid—I am working the phones to stitch together your next score.'
+                  : displayedNarrative}
+              </motion.p>
+            </AnimatePresence>
           </div>
         )}
         {error && (

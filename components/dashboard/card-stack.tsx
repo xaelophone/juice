@@ -152,7 +152,7 @@ export function CardStack() {
         const roiTone = netRoi > 0 ? 'positive' : netRoi < 0 ? 'negative' : 'neutral';
 
         return (
-          <CardPrimitive key={card.cardId}>
+          <CardPrimitive key={card.cardId} className="bg-white dark:bg-card">
             <CardHeader className="flex flex-col gap-2">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>{card.name}</CardTitle>
@@ -187,7 +187,10 @@ export function CardStack() {
                   return (
                     <div
                       key={perk.id}
-                      className="grid gap-4 rounded-md border border-border bg-card/40 p-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                      className={cn(
+                        'grid gap-4 rounded-md border border-border bg-white p-4 dark:bg-card sm:grid-cols-[1fr_auto] sm:items-center',
+                        isComplete && 'ring-1 ring-emerald-200 dark:ring-emerald-400/60'
+                      )}
                     >
                       <div className="space-y-2">
                         <div className="space-y-1">

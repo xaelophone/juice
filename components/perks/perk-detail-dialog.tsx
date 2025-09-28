@@ -13,7 +13,7 @@ interface PerkDetailDialogProps {
   trigger: React.ReactNode;
   completions: Completion[];
   currency: string;
-  onSubmit: (data: { date: string; amount: number; note?: string; receiptUrl?: string }) => void;
+  onSubmit: (data: Pick<Completion, 'date' | 'amount' | 'note'>) => void;
   onRemoveCompletion: (completionId: string) => void;
 }
 
@@ -29,7 +29,6 @@ export function PerkDetailDialog({
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [receiptUrl, setReceiptUrl] = useState('');
 
   const remaining = Math.max(
     0,
@@ -41,10 +40,9 @@ export function PerkDetailDialog({
     if (!date || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       return;
     }
-    onSubmit({ date, amount: parsedAmount, note: note || undefined, receiptUrl: receiptUrl || undefined });
+    onSubmit({ date, amount: parsedAmount, note: note || undefined });
     setAmount('');
     setNote('');
-    setReceiptUrl('');
     setOpen(false);
   };
 
@@ -86,16 +84,13 @@ export function PerkDetailDialog({
                 onChange={event => setNote(event.target.value)}
               />
             </label>
-            <label className="grid gap-1">
-              <span className="text-xs font-medium uppercase text-muted-foreground">Receipt URL</span>
-              <Input
-                type="url"
-                placeholder="https://..."
-                value={receiptUrl}
-                onChange={event => setReceiptUrl(event.target.value)}
-              />
-            </label>
-            <Button onClick={handleSave}>Mark credit used</Button>
+            <Button
+              onClick={handleSave}
+              variant="outline"
+              className="w-full border-emerald-500 text-emerald-700 shadow-md transition-shadow hover:bg-emerald-500 hover:text-white hover:shadow-lg sm:w-auto disabled:border-emerald-200 disabled:text-emerald-300 disabled:shadow-none"
+            >
+              Claim credit
+            </Button>
           </div>
         </div>
         {completions.length > 0 && (
