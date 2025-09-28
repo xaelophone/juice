@@ -42,7 +42,12 @@ export function ManageCardsButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Manage cards</Button>
+        <Button
+          variant="outline"
+          className="border-emerald-500 text-emerald-700 shadow-md transition-shadow hover:bg-emerald-500 hover:text-white hover:shadow-lg"
+        >
+          Manage cards
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl pt-12">
         <div className="space-y-6">

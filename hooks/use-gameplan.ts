@@ -4,9 +4,12 @@ import { useMemo } from 'react';
 import { useLocalStorage } from './use-local-storage';
 import { GameplanChatMessage, GameplanContent, GameplanRecord } from '@/types';
 
+export type GameplanStatus = 'idle' | 'generating';
+
 interface StoredGameplanState {
   plan: GameplanRecord | null;
   chatHistory: GameplanChatMessage[];
+  status?: GameplanStatus;
 }
 
 interface ReplacePlanOptions {
@@ -20,7 +23,8 @@ const DEFAULT_GAMEPLAN_MODEL = 'gpt-5';
 
 const INITIAL_STATE: StoredGameplanState = {
   plan: null,
-  chatHistory: []
+  chatHistory: [],
+  status: 'idle'
 };
 
 function createId(prefix: string) {
@@ -47,7 +51,8 @@ export function useGameplan() {
           generatedAt: timestamp,
           model
         },
-        chatHistory: options.keepChat ? prev.chatHistory : []
+        chatHistory: options.keepChat ? prev.chatHistory : [],
+        status: 'idle'
       };
     });
   };
@@ -59,6 +64,7 @@ export function useGameplan() {
 
     setState(prev => ({
       ...prev,
+      status: prev.status ?? 'idle',
       chatHistory: [
         ...prev.chatHistory,
         {
@@ -75,25 +81,37 @@ export function useGameplan() {
   const clearChat = () =>
     setState(prev => ({
       ...prev,
+      status: prev.status ?? 'idle',
       chatHistory: []
     }));
 
   const setChatHistory = (messages: GameplanChatMessage[]) =>
     setState(prev => ({
       ...prev,
+      status: prev.status ?? 'idle',
       chatHistory: messages
     }));
 
   const hasPlan = useMemo(() => Boolean(state.plan), [state.plan]);
 
+  const setStatus = (nextStatus: GameplanStatus) =>
+    setState(prev => ({
+      ...prev,
+      status: nextStatus
+    }));
+
+  const status = state.status ?? 'idle';
+
   return {
     plan: state.plan ?? undefined,
     chatHistory: state.chatHistory,
     hasPlan,
+    status,
     replacePlan,
     clearPlan,
     appendMessage,
     clearChat,
-    setChatHistory
+    setChatHistory,
+    setStatus
   };
 }
