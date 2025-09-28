@@ -16,7 +16,7 @@ interface ReplacePlanOptions {
 }
 
 const STORAGE_KEY = 'juice-gameplan-v1';
-const DEFAULT_GAMEPLAN_MODEL = 'gpt-5.0-mini';
+const DEFAULT_GAMEPLAN_MODEL = 'gpt-5';
 
 const INITIAL_STATE: StoredGameplanState = {
   plan: null,

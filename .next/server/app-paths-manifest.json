@@ -1,4 +1,5 @@
 {
-  "/api/gameplan/route": "app/api/gameplan/route.js",
-  "/(dashboard)/gameplan/page": "app/(dashboard)/gameplan/page.js"
+  "/(dashboard)/gameplan/page": "app/(dashboard)/gameplan/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js"
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChartBarIcon, Cog6ToothIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -39,6 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          <ThemeToggle />
         </nav>
       </header>
       <main className="flex-1 px-6 py-8">{children}</main>

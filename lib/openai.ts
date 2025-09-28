@@ -5,10 +5,11 @@ import {
   GameplanTaskPriority
 } from '@/types';
 
-const DEFAULT_MODEL = 'gpt-5.0-mini';
+const DEFAULT_MODEL = 'gpt-5';
 const GAMEPLAN_PRIORITY_VALUES = ['high', 'medium', 'low'] as const satisfies ReadonlyArray<GameplanTaskPriority>;
 
 const OPENAI_API_URL = `${process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'}/responses`;
+const RESPONSES_BETA_HEADER = process.env.OPENAI_RESPONSES_BETA ?? 'responses-2024-05-01';
 
 async function callResponsesAPI(payload: Record<string, unknown>) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -21,7 +22,8 @@ async function callResponsesAPI(payload: Record<string, unknown>) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`,
+      'OpenAI-Beta': RESPONSES_BETA_HEADER
     },
     body: JSON.stringify(payload)
   });
@@ -88,7 +90,7 @@ const GAMEPLAN_TASK_SCHEMA = {
     dueBy: { type: ['string', 'null'] },
     expectedValue: { type: ['number', 'null'] }
   },
-  required: ['id', 'title', 'description', 'priority']
+  required: ['id', 'title', 'description', 'priority', 'cardId', 'perkId', 'dueBy', 'expectedValue']
 };
 
 const GAMEPLAN_RESPONSE_SCHEMA = {
@@ -131,7 +133,7 @@ const GAMEPLAN_CHAT_RESPONSE_SCHEMA = {
 export async function getPerkSummary(prompt: string) {
   const response = await callResponsesAPI({
     model: DEFAULT_MODEL,
-    input: prompt
+    input: `You are a concise copywriter. Summarize the following perk for the Juice app in 2 sentences or fewer.\n\nPerk details:\n${prompt}`
   });
 
   return extractTextContent(response);
@@ -155,23 +157,21 @@ export async function generateGameplan(options: {
 
   const planContext = JSON.stringify({ quarter, userGoals, cards }, null, 2);
 
+  const prompt = [
+    'You are the Juice AI strategist. Build a quarterly action plan that helps a cardholder maximize every benefit before it expires.',
+    'Base your recommendations on the JSON data provided, prioritize high dollar perks, and keep tasks specific and time-bound.',
+    'Return strictly valid JSON matching the provided schema. No markdown, no commentary, only JSON.',
+    '',
+    'Context JSON:',
+    planContext
+  ].join('\n');
+
   const response = await callResponsesAPI({
     model: DEFAULT_MODEL,
-    temperature: 0.6,
-    input: [
-      {
-        role: 'system',
-        content:
-          'You are an expert credit card rewards strategist. Create actionable quarterly plans that help cardholders use every benefit before it expires. Focus on tangible actions, realistic pacing, and estimated statement value.'
-      },
-      {
-        role: 'user',
-        content: `Generate a next-quarter execution plan using this JSON context. Reply **only** with JSON that follows the provided schema.\n\n${planContext}`
-      }
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
+    input: prompt,
+    text: {
+      format: {
+        type: 'json_schema',
         name: 'gameplan_response',
         schema: GAMEPLAN_RESPONSE_SCHEMA,
         strict: true
@@ -206,33 +206,29 @@ export async function adviseOnGameplan(options: {
   const resolvedQuarter = quarter ?? currentPlan.quarter;
   const planJson = JSON.stringify({ quarter: resolvedQuarter, currentPlan }, null, 2);
 
-  const input = [
-    {
-      role: 'system' as const,
-      content:
-        'You are the Juice AI Gameplan Advisor. Update plans for credit card perk usage with clear, budget-conscious actions. Adjust priorities, re-order tasks, or add new ones without inventing perks that do not exist.'
-    },
-    {
-      role: 'assistant' as const,
-      content: `Current plan JSON:\n${planJson}`
-    },
-    ...history.map(message => ({
-      role: message.role,
-      content: message.content
-    })),
-    {
-      role: 'user' as const,
-      content: latestUserMessage
-    }
-  ];
+  const historyTranscript = history
+    .map(entry => `${entry.role.toUpperCase()}: ${entry.content}`)
+    .join('\n');
+
+  const prompt = [
+    'You are the Juice AI Gameplan Advisor. You update quarterly action plans for credit card perks.',
+    'Given the current plan JSON, adjust tasks, priorities, or add/remove items so the user captures the most value without inventing new perks.',
+    'Respond with JSON following the schema. Include a natural-language assistant message summarizing the changes.',
+    '',
+    'Current plan JSON:',
+    planJson,
+    '',
+    historyTranscript ? `Chat history so far:\n${historyTranscript}` : 'Chat history so far: (none yet)',
+    '',
+    `NEW USER MESSAGE: ${latestUserMessage}`
+  ].join('\n');
 
   const response = await callResponsesAPI({
     model: DEFAULT_MODEL,
-    temperature: 0.5,
-    input,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
+    input: prompt,
+    text: {
+      format: {
+        type: 'json_schema',
         name: 'gameplan_chat_response',
         schema: GAMEPLAN_CHAT_RESPONSE_SCHEMA,
         strict: true

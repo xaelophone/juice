@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useGameplan } from '@/hooks/use-gameplan';
 import { useJuiceState } from '@/hooks/use-juice-state';
 
-const GAMEPLAN_MODEL = 'gpt-5.0-mini';
+const GAMEPLAN_MODEL = 'gpt-5';
 
 function getUpcomingQuarter(reference = new Date()) {
   const currentQuarter = Math.floor(reference.getMonth() / 3) + 1;
