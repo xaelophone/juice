@@ -27,7 +27,8 @@ const cadenceBadgeClasses: Record<ResetCadence, string> = {
   monthly: 'border-transparent bg-sky-100 text-sky-700',
   quarterly: 'border-transparent bg-emerald-100 text-emerald-700',
   semiannual: 'border-transparent bg-amber-100 text-amber-700',
-  annual: 'border-transparent bg-violet-100 text-violet-700'
+  annual: 'border-transparent bg-violet-100 text-violet-700',
+  'one-time': 'border-transparent bg-fuchsia-100 text-fuchsia-700'
 };
 
 const categoryLabels = categoryOptions.reduce(
@@ -227,7 +228,6 @@ export function CardStack() {
                           >
                             <Checkbox
                               checked={isComplete}
-                              readOnly
                               aria-label={`Perk ${perk.title} completion status`}
                               className="pointer-events-none h-6 w-6"
                             />

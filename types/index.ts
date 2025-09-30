@@ -1,4 +1,6 @@
-export type ResetCadence = 'monthly' | 'quarterly' | 'semiannual' | 'annual';
+export type ResetCadence = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'one-time';
+
+export type BenefitType = 'credit' | 'subscription' | 'reimbursement' | 'one-time';
 
 export interface Completion {
   id: string;
@@ -31,6 +33,17 @@ export interface Perk {
   tags: string[];
   terms?: string;
   enabledByDefault?: boolean;
+  benefitType?: BenefitType;
+  expiryDate?: string;
+  recurringAmount?: number;
+}
+
+export interface AdditionalBenefit {
+  id: string;
+  category: 'protection' | 'status' | 'service' | 'feature' | 'earning';
+  title: string;
+  description: string;
+  details?: string;
 }
 
 export interface Card {
@@ -40,6 +53,8 @@ export interface Card {
   annualFee: number;
   summary: string;
   perks: Perk[];
+  imageUrl?: string;
+  additionalBenefits?: AdditionalBenefit[];
 }
 
 export interface CaptureSnapshot {

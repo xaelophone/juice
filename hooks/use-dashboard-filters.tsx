@@ -17,7 +17,8 @@ export const cadenceOptions = [
   { label: 'Monthly', value: 'monthly' },
   { label: 'Quarterly', value: 'quarterly' },
   { label: 'Semiannual', value: 'semiannual' },
-  { label: 'Annual', value: 'annual' }
+  { label: 'Annual', value: 'annual' },
+  { label: 'One-Time', value: 'one-time' }
 ] as const satisfies readonly FilterOption<CadenceFilter>[];
 
 export const cardOptions = [
