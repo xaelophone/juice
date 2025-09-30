@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PerkDetailDialog } from '@/components/perks/perk-detail-dialog';
 import { CardInfoDialog } from './card-info-dialog';
+import { ManageCardsButton } from '@/components/settings/manage-cards-button';
 import { useDashboardFilters, cadenceOptions, cardOptions, categoryOptions, type FilterOption } from '@/hooks/use-dashboard-filters';
 import { useFilteredCards } from '@/hooks/use-filtered-cards';
 import { useJuiceState } from '@/hooks/use-juice-state';
@@ -152,9 +153,7 @@ function CardStackContent({
   if (selectedCards.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          No cards selected yet. Head to the welcome screen to add your first card.
-        </p>
+        <ManageCardsButton />
       </div>
     );
   }

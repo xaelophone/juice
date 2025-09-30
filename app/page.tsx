@@ -1,5 +1,5 @@
-import WelcomePage from './(onboarding)/welcome/page';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <WelcomePage />;
+  redirect('/dashboard');
 }

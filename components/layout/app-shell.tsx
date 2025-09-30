@@ -17,8 +17,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <Link href="/dashboard" className="text-base font-semibold">
-          Juice
+        <Link href="/dashboard" className="text-2xl" aria-label="Juice - Home">
+          🍊
         </Link>
         <nav className="flex items-center gap-3 text-sm">
           {navItems.map(item => {
