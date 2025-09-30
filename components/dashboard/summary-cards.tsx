@@ -200,7 +200,7 @@ export function SummaryCards() {
           disabled={isGenerating}
           size="sm"
           variant="outline"
-          className="w-full border-emerald-500 text-emerald-700 shadow-md transition-shadow hover:bg-emerald-500 hover:text-white hover:shadow-lg sm:w-auto disabled:border-emerald-200 disabled:text-emerald-300 disabled:shadow-none"
+          className="w-full border-emerald-500 text-foreground shadow-md transition-shadow hover:bg-emerald-500 hover:text-white hover:shadow-lg sm:w-auto disabled:border-emerald-200 disabled:text-muted-foreground disabled:shadow-none"
         >
           {isGenerating ? (
             <span className="flex items-center justify-center gap-2">

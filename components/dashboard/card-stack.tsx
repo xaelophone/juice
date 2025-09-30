@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card as CardPrimitive, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PerkDetailDialog } from '@/components/perks/perk-detail-dialog';
+import { CardInfoDialog } from './card-info-dialog';
 import { useDashboardFilters, cadenceOptions, cardOptions, categoryOptions, type FilterOption } from '@/hooks/use-dashboard-filters';
 import { useFilteredCards } from '@/hooks/use-filtered-cards';
 import { useJuiceState } from '@/hooks/use-juice-state';
@@ -97,6 +99,56 @@ export function CardStack() {
   const { cadenceFilter, setCadenceFilter, cardFilter, setCardFilter, categoryFilter, setCategoryFilter } = useDashboardFilters();
   const { settings } = useSettings();
 
+  return (
+    <TooltipProvider delayDuration={300}>
+      <CardStackContent
+        cards={cards}
+        cadenceValue={cadenceValue}
+        cadenceFilter={cadenceFilter}
+        setCadenceFilter={setCadenceFilter}
+        cardFilter={cardFilter}
+        setCardFilter={setCardFilter}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        recordCompletion={recordCompletion}
+        removeCompletion={removeCompletion}
+        settings={settings}
+        selectedCards={selectedCards}
+      />
+    </TooltipProvider>
+  );
+}
+
+interface CardStackContentProps {
+  cards: ReturnType<typeof useFilteredCards>['cards'];
+  cadenceValue: ReturnType<typeof useFilteredCards>['cadenceValue'];
+  cadenceFilter: ReturnType<typeof useDashboardFilters>['cadenceFilter'];
+  setCadenceFilter: ReturnType<typeof useDashboardFilters>['setCadenceFilter'];
+  cardFilter: ReturnType<typeof useDashboardFilters>['cardFilter'];
+  setCardFilter: ReturnType<typeof useDashboardFilters>['setCardFilter'];
+  categoryFilter: ReturnType<typeof useDashboardFilters>['categoryFilter'];
+  setCategoryFilter: ReturnType<typeof useDashboardFilters>['setCategoryFilter'];
+  recordCompletion: ReturnType<typeof useJuiceState>['recordCompletion'];
+  removeCompletion: ReturnType<typeof useJuiceState>['removeCompletion'];
+  settings: ReturnType<typeof useSettings>['settings'];
+  selectedCards: ReturnType<typeof useJuiceState>['selectedCards'];
+}
+
+function CardStackContent({
+  cards,
+  cadenceValue,
+  cadenceFilter,
+  setCadenceFilter,
+  cardFilter,
+  setCardFilter,
+  categoryFilter,
+  setCategoryFilter,
+  recordCompletion,
+  removeCompletion,
+  settings,
+  selectedCards
+}: CardStackContentProps) {
+
   if (selectedCards.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-8 text-center">
@@ -152,11 +204,24 @@ export function CardStack() {
         const netRoi = card.realized - card.annualFee;
         const roiTone = netRoi > 0 ? 'positive' : netRoi < 0 ? 'negative' : 'neutral';
 
+        const fullCard = selectedCards.find(c => c.id === card.cardId);
+
         return (
           <CardPrimitive key={card.cardId} className="bg-white dark:bg-card">
             <CardHeader className="flex flex-col gap-2">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle>{card.name}</CardTitle>
+                {fullCard ? (
+                  <CardInfoDialog card={fullCard}>
+                    <button
+                      type="button"
+                      className="text-left transition-colors hover:text-primary"
+                    >
+                      <CardTitle className="cursor-pointer">{card.name}</CardTitle>
+                    </button>
+                  </CardInfoDialog>
+                ) : (
+                  <CardTitle>{card.name}</CardTitle>
+                )}
                 <span
                   className={cn(
                     'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
@@ -180,8 +245,28 @@ export function CardStack() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {card.perks.map(({ perk, completions, usedAmount, remaining, category }) => {
+                {card.perks
+                  .sort((a, b) => {
+                    const aComplete = a.usedAmount >= a.perk.cashValue;
+                    const bComplete = b.usedAmount >= b.perk.cashValue;
+                    const aPartial = a.usedAmount > 0 && a.usedAmount < a.perk.cashValue;
+                    const bPartial = b.usedAmount > 0 && b.usedAmount < b.perk.cashValue;
+                    
+                    // Fully completed items go to bottom
+                    if (aComplete && !bComplete) return 1;
+                    if (!aComplete && bComplete) return -1;
+                    
+                    // Among non-complete items, partial goes after uncompleted
+                    if (!aComplete && !bComplete) {
+                      if (aPartial && !bPartial) return 1;
+                      if (!aPartial && bPartial) return -1;
+                    }
+                    
+                    return 0;
+                  })
+                  .map(({ perk, completions, usedAmount, remaining, category }) => {
                   const isComplete = usedAmount >= perk.cashValue;
+                  const isPartiallyComplete = usedAmount > 0 && usedAmount < perk.cashValue;
                   const cadenceLabel = cadenceLabels[perk.cadence] ?? perk.cadence;
                   const categoryLabel = categoryLabels[category];
 
@@ -189,14 +274,40 @@ export function CardStack() {
                     <div
                       key={perk.id}
                       className={cn(
-                        'grid gap-4 rounded-md border border-border bg-white p-4 dark:bg-card sm:grid-cols-[1fr_auto] sm:items-center',
-                        isComplete && 'ring-1 ring-emerald-200 dark:ring-emerald-400/60'
+                        'grid gap-4 rounded-md border border-border p-4 sm:grid-cols-[1fr_auto] sm:items-center transition-colors',
+                        isComplete && 'bg-gray-100 dark:bg-gray-800/50 opacity-75',
+                        isPartiallyComplete && !isComplete && 'bg-yellow-50 dark:bg-yellow-900/20',
+                        !isComplete && !isPartiallyComplete && 'bg-white dark:bg-card'
                       )}
                     >
                       <div className="space-y-2">
-                        <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
                           <p className="font-medium leading-tight">{perk.title}</p>
-                          <p className="text-xs text-muted-foreground">{perk.description}</p>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                                aria-label="View benefit description"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="w-4 h-4"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="text-xs">{perk.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <Badge
